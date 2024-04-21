@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 echo 'Running the PostCreateCommand...'
 
 mkdir -p ~/.vscode
