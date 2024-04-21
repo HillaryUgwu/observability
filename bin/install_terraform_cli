@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd /workspaces/observability/..
+cd $CODESPACE_VSCODE_FOLDER'/..'
 
 sudo apt-get update && sudo apt-get install -y gnupg software-properties-common curl
 
@@ -20,4 +20,4 @@ sudo apt update
 
 sudo apt-get install terraform -y
 
-cd /workspaces/observability
+cd $CODESPACE_VSCODE_FOLDER
