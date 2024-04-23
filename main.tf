@@ -46,6 +46,21 @@ resource "aws_key_pair" "ssh_key" {
  public_key = tls_private_key.ssh_key.public_key_openssh
 }
 
+# Save private key locally.
+resource "local_sensitive_file" "private_key" {
+ content         = tls_private_key.ssh_key.private_key_openssh
+ filename        = "${path.module}/.ssh/id_rsa"
+ file_permission = "0600"
+ depends_on      = [tls_private_key.ssh_key]
+}
+
+# Save public key locally.
+resource "local_sensitive_file" "public_key" {
+ content         = tls_private_key.ssh_key.public_key_openssh
+ filename        = "${path.module}/.ssh/id_rsa.pub"
+ depends_on      = [tls_private_key.ssh_key]
+}
+
 resource "aws_security_group" "controller_sg" {
  name        = "controller-sg"
  description = "Security group for the controller instance"
@@ -54,7 +69,7 @@ resource "aws_security_group" "controller_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["93.206.39.2/32"]
+    cidr_blocks = ["4.180.251.8/32"]
  }
 
  egress {
@@ -84,7 +99,8 @@ resource "aws_security_group" "node_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    security_groups = [aws_security_group.controller_sg.id]
+    cidr_blocks = ["0.0.0.0/0"]
+    #security_groups = [aws_security_group.controller_sg.id]
  }
 
  egress {
@@ -124,7 +140,7 @@ variable "instance_tags" {
 resource "aws_instance" "controller" {
  ami                     = data.aws_ami.amazon_linux_2023.id
  instance_type           = "t2.micro"
- key_name                = "ohary"
+ key_name                = aws_key_pair.ssh_key.key_name
  vpc_security_group_ids  = [aws_security_group.controller_sg.id]
 
  tags = {
@@ -135,18 +151,28 @@ resource "aws_instance" "controller" {
                 sudo yum update -y
                 sudo yum install ansible -y
                 sudo hostnamectl set-hostname controller
-                mkdir -p /home/ec2-user/.ssh
-                echo '${tls_private_key.ssh_key.private_key_pem}' > /home/ec2-user/.ssh/id_rsa
-                chmod 600 /home/ec2-user/.ssh/id_rsa
+                #mkdir -p /home/ec2-user/.ssh
+                #echo '${tls_private_key.ssh_key.private_key_pem}' > /home/ec2-user/.ssh/id_rsa
+                #chmod 600 /home/ec2-user/.ssh/id_rsa
+                #chown ec2-user:ec2-user ~/.ssh -R
+                #chown ec2-user:ec2-user ~/.ssh/id_rsa
                 EOF
 
+}
+
+resource "local_file" "ansible_inventory" {
+  content = templatefile("inventory.ini", {
+    ip_addrs = [for i in aws_instance.node:i.public_ip]
+    #ssh_keyfile = tls_private_key.example.private_key_pem
+  })
+  filename = "inventory.ini"
 }
 
 resource "aws_instance" "node" {
  count                     = 2
  ami                       = data.aws_ami.amazon_linux_2023.id
  instance_type             = "t2.micro"
- key_name                  = "ohary"
+ key_name                  = aws_key_pair.ssh_key.key_name
  vpc_security_group_ids    = [aws_security_group.node_sg.id]
 
  tags = {
@@ -156,9 +182,10 @@ resource "aws_instance" "node" {
  user_data  = <<-EOF
               #!/bin/bash
               sudo hostnamectl set-hostname node${count.index + 1}
-              mkdir -p /home/ec2-user/.ssh
-              echo '${tls_private_key.ssh_key.public_key_openssh}' > /home/ec2-user/.ssh/authorized_keys
-              chmod 600 /home/ec2-user/.ssh/authorized_keys
+              #mkdir -p /home/ec2-user/.ssh
+              #echo '${tls_private_key.ssh_key.public_key_openssh}' >> /home/ec2-user/.ssh/authorized_keys
+              #chmod 600 /home/ec2-user/.ssh/authorized_keys
+              #chown ec2-user:ec2-user ~/.ssh -R
               EOF
 }
 

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+
+export WORKSPACE_IP=$(curl ifconfig.me)
+# echo "export WORKSPACE_IP='$(curl ifconfig.me)'" >> ~/.envar
+# ssh-keygen -t rsa -b 2048 -f /home/ec2-user/.ssh/id_rsa -q -P ""
