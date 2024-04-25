@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# Path to your inventory.ini file
+inventory_file="inventory.ini"
+
+# Path to your public ssh key
+public_key="$HOME/.ssh/id_rsa.pub"
+echo "$public_key"
+
+# Extract IP addresses from the inventory file
+ip_addresses=$(grep -oP '(\d{1,3}\.){3}\d{1,3}' "$inventory_file")
+echo "$ip_addresses"
+
+# Loop over the IP addresses
+for ip in $ip_addresses; do
+   echo "Appending SSH key to $ip"
+    # Use ssh to append the public SSH key to the authorized_keys file on the remote host
+    ssh -v -i "id_rsa" "$ip" "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys" < "$public_key"
+done

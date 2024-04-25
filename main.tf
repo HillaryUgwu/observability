@@ -54,12 +54,12 @@ resource "local_sensitive_file" "private_key" {
  depends_on      = [tls_private_key.ssh_key]
 }
 
-# Save public key locally.
-resource "local_sensitive_file" "public_key" {
- content         = tls_private_key.ssh_key.public_key_openssh
- filename        = "${path.module}/.ssh/id_rsa.pub"
- depends_on      = [tls_private_key.ssh_key]
-}
+## Save public key locally.
+#resource "local_sensitive_file" "public_key" {
+# content         = tls_private_key.ssh_key.public_key_openssh
+# filename        = "${path.module}/.ssh/id_rsa.pub"
+# depends_on      = [tls_private_key.ssh_key]
+#}
 
 resource "aws_security_group" "controller_sg" {
  name        = "controller-sg"
@@ -69,7 +69,7 @@ resource "aws_security_group" "controller_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["4.180.251.8/32"]
+    cidr_blocks = ["51.144.93.129/32"]
  }
 
  egress {
@@ -138,34 +138,55 @@ variable "instance_tags" {
 }
 
 resource "aws_instance" "controller" {
- ami                     = data.aws_ami.amazon_linux_2023.id
- instance_type           = "t2.micro"
- key_name                = aws_key_pair.ssh_key.key_name
- vpc_security_group_ids  = [aws_security_group.controller_sg.id]
+  ami                     = data.aws_ami.amazon_linux_2023.id
+  instance_type           = "t2.micro"
+  key_name                = aws_key_pair.ssh_key.key_name
+  vpc_security_group_ids  = [aws_security_group.controller_sg.id]
 
- tags = {
-    Name                 = "controller"
- }
-  user_data   = <<-EOF
-                #!/bin/bash
-                sudo yum update -y
-                sudo yum install ansible -y
-                sudo hostnamectl set-hostname controller
-                #mkdir -p /home/ec2-user/.ssh
-                #echo '${tls_private_key.ssh_key.private_key_pem}' > /home/ec2-user/.ssh/id_rsa
-                #chmod 600 /home/ec2-user/.ssh/id_rsa
-                #chown ec2-user:ec2-user ~/.ssh -R
-                #chown ec2-user:ec2-user ~/.ssh/id_rsa
-                EOF
+  tags = {
+    Name                  = "controller"
+  }
+
+  connection {
+    type        = "ssh"
+    user        = "ec2-user"
+    private_key = tls_private_key.ssh_key.private_key_openssh
+    host        = self.public_ip
+    host_key    = ""
+  }
+
+  # Provisioner to copy the 'src' folder to the remote instance
+  provisioner "file" {
+    source      = "src/" # Ensure there's a trailing slash to copy the contents directly
+    destination = "/home/ec2-user"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /home/ec2-user/bootstrap_controller",
+      "chmod +x /home/ec2-user/download_playbook",
+      "chmod +x /home/ec2-user/copy_key_2node",
+      "bash /home/ec2-user/bootstrap_controller",
+      #"bash /home/ec2-user/copy_key_2node"
+    ]
+  }
+
+  #user_data   = <<-EOF
+  #              #!/bin/bash
+  #              sudo yum update -y
+  #              sudo yum install ansible -y
+  #              sudo hostnamectl set-hostname controller
+  #              echo '${tls_private_key.ssh_key.private_key_openssh}' > /home/ec2-user/id_rsa
+  #              chmod 600 /home/ec2-user/id_rsa
+  #              EOF
 
 }
 
 resource "local_file" "ansible_inventory" {
-  content = templatefile("inventory.ini", {
-    ip_addrs = [for i in aws_instance.node:i.public_ip]
-    #ssh_keyfile = tls_private_key.example.private_key_pem
+  content = templatefile("src/inventory.ini", {
+    ip_addrs = [for i in aws_instance.node:i.private_ip]
   })
-  filename = "inventory.ini"
+  filename = "src/inventory.ini"
 }
 
 resource "aws_instance" "node" {
@@ -182,21 +203,17 @@ resource "aws_instance" "node" {
  user_data  = <<-EOF
               #!/bin/bash
               sudo hostnamectl set-hostname node${count.index + 1}
-              #mkdir -p /home/ec2-user/.ssh
-              #echo '${tls_private_key.ssh_key.public_key_openssh}' >> /home/ec2-user/.ssh/authorized_keys
-              #chmod 600 /home/ec2-user/.ssh/authorized_keys
-              #chown ec2-user:ec2-user ~/.ssh -R
               EOF
 }
 
-output "controller_public_ip" {
- description = "Public IP address of the controller instance"
- value       = aws_instance.controller.public_ip
+output "controller_private_ip" {
+ description = "Private IP address of the controller instance"
+ value       = aws_instance.controller.private_ip
 }
 
-output "node_public_ips" {
- description = "Public IP addresses of the node instances"
- value       = aws_instance.node[*].public_ip
+output "node_private_ip" {
+ description = "Private IP addresses of the node instances"
+ value       = aws_instance.node[*].private_ip
 }
 
 resource "null_resource" "output_ips" {

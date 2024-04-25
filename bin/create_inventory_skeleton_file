@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
 # Use a heredoc with a quoted delimiter to write the literal string to the file
-cat <<'EOF' > inventory.ini
-[node]
+cat <<'EOF' > src/inventory.ini
+[prometheus]
+%{ for addr in ip_addrs ~}
+${addr}
+%{ endfor ~}
+
+[grafana]
 %{ for addr in ip_addrs ~}
 ${addr}
 %{ endfor ~}

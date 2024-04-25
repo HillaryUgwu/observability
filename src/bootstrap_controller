@@ -1,0 +1,9 @@
+#!/bin/bash
+# echo "StrictHostKeyChecking=accept-new" >> /home/ec2-user/.ssh/config
+# chown -R ec2-user:ec2-user ~/.ssh
+# chmod 600 ~/.ssh/config
+sudo yum update -y
+sudo yum install ansible -y
+sudo hostnamectl set-hostname controller
+echo '${tls_private_key.ssh_key.private_key_openssh}' > /home/ec2-user/id_rsa
+chmod 600 /home/ec2-user/id_rsa
