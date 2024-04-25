@@ -13,4 +13,9 @@ git sparse-checkout set src/frontend/
 git clone --filter=blob:none --no-checkout https://github.com/HillaryUgwu/observability.git
 cd observability
 git checkout main
-git sparse-checkout set ansible_playbook/
+git sparse-checkout set ansible/
+
+mv /home/ec2-user/aws-cloud-resume/observability/ansible/ /home/ec2-user/
+mkdir /home/ec2-user/ansible/roles/website
+mv /home/ec2-user/aws-cloud-resume/src/frontend/ /home/ec2-user/ansible/roles/website/
+rm -rf aws-cloud-resume/

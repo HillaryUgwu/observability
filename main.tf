@@ -54,12 +54,9 @@ resource "local_sensitive_file" "private_key" {
  depends_on      = [tls_private_key.ssh_key]
 }
 
-## Save public key locally.
-#resource "local_sensitive_file" "public_key" {
-# content         = tls_private_key.ssh_key.public_key_openssh
-# filename        = "${path.module}/.ssh/id_rsa.pub"
-# depends_on      = [tls_private_key.ssh_key]
-#}
+data "external" "fetch_ip" {
+  program = ["bash", "${path.module}/bin/workspace_ip"]
+}
 
 resource "aws_security_group" "controller_sg" {
  name        = "controller-sg"
@@ -69,7 +66,7 @@ resource "aws_security_group" "controller_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["51.144.93.129/32"]
+    cidr_blocks = ["${data.external.fetch_ip.result["ip"]}/32"]
  }
 
  egress {
@@ -99,8 +96,7 @@ resource "aws_security_group" "node_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    #security_groups = [aws_security_group.controller_sg.id]
+    security_groups = [aws_security_group.controller_sg.id]
  }
 
  egress {
@@ -117,7 +113,6 @@ resource "aws_security_group" "node_sg" {
 
 resource "aws_s3_bucket" "terraform_state_bucket" {
   bucket = "tfstate-bucket-observability"
-  #force_destroy = true
   lifecycle {
     prevent_destroy = true
   }
@@ -161,24 +156,34 @@ resource "aws_instance" "controller" {
     destination = "/home/ec2-user"
   }
 
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /home/ec2-user/bootstrap_controller",
-      "chmod +x /home/ec2-user/download_playbook",
-      "chmod +x /home/ec2-user/copy_key_2node",
-      "bash /home/ec2-user/bootstrap_controller",
-      #"bash /home/ec2-user/copy_key_2node"
-    ]
-  }
+  #provisioner "remote-exec" {
+  #  inline = [
+  #    "echo '${tls_private_key.ssh_key.private_key_openssh}' > /home/ec2-user/id_rsa",
+  #    "chmod +x /home/ec2-user/bootstrap_controller",
+  #    "chmod +x /home/ec2-user/download_playbook",
+  #    "chmod +x /home/ec2-user/copy_key_2node",
+  #    "bash /home/ec2-user/bootstrap_controller",
+  #    "bash /home/ec2-user/download_playbook",
+  #    #"bash /home/ec2-user/copy_key_2node",
+  #    #"ansible-playbook -i inventory.ini ansible/playbook.yml"
+  #  ]
+  #}
 
-  #user_data   = <<-EOF
-  #              #!/bin/bash
-  #              sudo yum update -y
-  #              sudo yum install ansible -y
-  #              sudo hostnamectl set-hostname controller
-  #              echo '${tls_private_key.ssh_key.private_key_openssh}' > /home/ec2-user/id_rsa
-  #              chmod 600 /home/ec2-user/id_rsa
-  #              EOF
+  user_data   = <<-EOF
+               #!/bin/bash
+               sudo yum update -y
+               sudo yum install ansible -y
+               sudo hostnamectl set-hostname controller
+               echo '${tls_private_key.ssh_key.private_key_openssh}' > /home/ec2-user/id_rsa
+               chmod 600 /home/ec2-user/id_rsa
+               chown -R ec2-user:ec2-user /home/ec2-user/id_rsa
+               chmod +x /home/ec2-user/download_playbook
+               chmod +x /home/ec2-user/copy_key_2node
+               bash /home/ec2-user/bootstrap_controller
+               bash /home/ec2-user/download_playbook
+               #"bash /home/ec2-user/copy_key_2node
+               #"ansible-playbook -i inventory.ini ansible/playbook.yml
+               EOF
 
 }
 
