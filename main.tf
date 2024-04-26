@@ -164,26 +164,17 @@ resource "aws_instance" "controller" {
   #  inline = [
   #    "echo '${tls_private_key.ssh_key.private_key_openssh}' > /home/ec2-user/id_rsa",
   #    "chmod +x /home/ec2-user/bootstrap_controller",
-  #    "chmod +x /home/ec2-user/download_playbook",
-  #    "chmod +x /home/ec2-user/copy_key_2node",
   #    "bash /home/ec2-user/bootstrap_controller",
-  #    "bash /home/ec2-user/download_playbook",
-  #    #"bash /home/ec2-user/copy_key_2node",
-  #    #"ansible-playbook -i inventory.ini ansible/playbook.yml -e 'ansible_ssh_private_key_file=/home/ec2-user/id_rsa'"
+  #    "ansible-playbook -i inventory.ini ansible/playbook.yml -e 'ansible_ssh_private_key_file=/home/ec2-user/id_rsa'"
   #  ]
   #}
 
   user_data   = <<-EOF
                #!/bin/bash
-               sudo yum update -y
-               sudo yum install ansible -y
-               sudo hostnamectl set-hostname controller
                echo '${tls_private_key.ssh_key.private_key_openssh}' > /home/ec2-user/id_rsa
-               chmod 600 /home/ec2-user/id_rsa
-               chown -R ec2-user:ec2-user /home/ec2-user/id_rsa
-               chmod +x /home/ec2-user/download_playbook
-               bash /home/ec2-user/download_playbook
-               #ansible-playbook -i inventory.ini ansible/playbook.yml -e "ansible_ssh_private_key_file=/home/ec2-user/id_rsa"
+               chmod +x /home/ec2-user/bootstrap_controller
+               bash /home/ec2-user/bootstrap_controller
+               ansible-playbook -i inventory.ini ansible/playbook.yml -e "ansible_ssh_private_key_file=/home/ec2-user/id_rsa"
                EOF
 }
 

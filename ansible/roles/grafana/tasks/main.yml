@@ -1,5 +1,5 @@
 - name: Import Grafana GPG key
- rpm_key:
+  rpm_key:
     state: present
     key: https://apt.grafana.com/gpg.key
     # key: https://packages.grafana.com/gpg.key
