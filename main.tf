@@ -54,7 +54,7 @@ resource "local_sensitive_file" "private_key" {
  depends_on      = [tls_private_key.ssh_key]
 }
 
-data "external" "fetch_ip" {
+data "external" "workspace_ip" {
   program = ["bash", "${path.module}/bin/workspace_ip"]
 }
 
@@ -66,7 +66,7 @@ resource "aws_security_group" "controller_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["${data.external.fetch_ip.result["ip"]}/32"]
+    cidr_blocks = ["${data.external.workspace_ip.result["ip"]}/32"]
  }
 
  egress {
@@ -150,6 +150,10 @@ resource "aws_instance" "controller" {
     host_key    = ""
   }
 
+  #provisioner "local-exec" {
+  #  command = "bash ${path.module}/bin/create_inventory_skeleton_file"
+  #}
+
   # Provisioner to copy the 'src' folder to the remote instance
   provisioner "file" {
     source      = "src/" # Ensure there's a trailing slash to copy the contents directly
@@ -165,7 +169,7 @@ resource "aws_instance" "controller" {
   #    "bash /home/ec2-user/bootstrap_controller",
   #    "bash /home/ec2-user/download_playbook",
   #    #"bash /home/ec2-user/copy_key_2node",
-  #    #"ansible-playbook -i inventory.ini ansible/playbook.yml"
+  #    #"ansible-playbook -i inventory.ini ansible/playbook.yml -e 'ansible_ssh_private_key_file=/home/ec2-user/id_rsa'"
   #  ]
   #}
 
@@ -178,13 +182,9 @@ resource "aws_instance" "controller" {
                chmod 600 /home/ec2-user/id_rsa
                chown -R ec2-user:ec2-user /home/ec2-user/id_rsa
                chmod +x /home/ec2-user/download_playbook
-               chmod +x /home/ec2-user/copy_key_2node
-               bash /home/ec2-user/bootstrap_controller
                bash /home/ec2-user/download_playbook
-               #"bash /home/ec2-user/copy_key_2node
-               #"ansible-playbook -i inventory.ini ansible/playbook.yml
+               #ansible-playbook -i inventory.ini ansible/playbook.yml -e "ansible_ssh_private_key_file=/home/ec2-user/id_rsa"
                EOF
-
 }
 
 resource "local_file" "ansible_inventory" {

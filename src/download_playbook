@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 # Generate the ssh key
-ssh-keygen -t rsa -b 2048 -f /home/ec2-user/.ssh/id_rsa -q -P ""
+# ssh-keygen -t rsa -b 2048 -f /home/ec2-user/.ssh/id_rsa -q -P ""
 
 # Get resume files
-git clone --filter=blob:none --no-checkout https://github.com/HillaryUgwu/aws-cloud-resume.git
-cd aws-cloud-resume
-git checkout main
-git sparse-checkout set src/frontend/
+# git clone --filter=blob:none --no-checkout https://github.com/HillaryUgwu/aws-cloud-resume.git
+# cd aws-cloud-resume
+# git checkout main
+# git sparse-checkout set src/frontend/
 
 # Get Ansible playbook
 git clone --filter=blob:none --no-checkout https://github.com/HillaryUgwu/observability.git
@@ -15,7 +15,6 @@ cd observability
 git checkout main
 git sparse-checkout set ansible/
 
-mv /home/ec2-user/aws-cloud-resume/observability/ansible/ /home/ec2-user/
-mkdir /home/ec2-user/ansible/roles/website
-mv /home/ec2-user/aws-cloud-resume/src/frontend/ /home/ec2-user/ansible/roles/website/
-rm -rf aws-cloud-resume/
+mv /home/ec2-user/observability/ansible/ /home/ec2-user/
+# mv /home/ec2-user/aws-cloud-resume/src/frontend/ /home/ec2-user/ansible/roles/website/
+cd .. && rm -rf observability/

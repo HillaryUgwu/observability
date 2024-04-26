@@ -2,6 +2,16 @@
 
 # Use a heredoc with a quoted delimiter to write the literal string to the file
 cat <<'EOF' > src/inventory.ini
+[website]
+%{ for addr in ip_addrs ~}
+${addr}
+%{ endfor ~}
+
+[node_exporter]
+%{ for addr in ip_addrs ~}
+${addr}
+%{ endfor ~}
+
 [prometheus]
 %{ for addr in ip_addrs ~}
 ${addr}

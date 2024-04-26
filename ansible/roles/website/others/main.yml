@@ -1,0 +1,24 @@
+- name: deploy website
+ hosts: all
+ become: yes
+ become_user: root
+ tasks:
+  - name: update ec2 instance
+    yum:
+      name: "*"
+      state: latest
+      update_cache: yes
+  - name: install apache server
+    yum:
+      name: httpd
+      state: latest
+  - name: clone website repository
+    git:
+      repo: 'https://github.com/HillaryUgwu/aws-cloud-resume.git'
+      dest: /var/www/html/
+      version: 'main'
+  - name: start apache server
+    ansible.builtin.service:
+      enabled: yes
+      name: httpd
+      state: started

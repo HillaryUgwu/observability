@@ -19,12 +19,12 @@ scrape_configs:
 rule_files:
   - alert.rules.yml
 
-alerting:
-  alertmanagers:
-  - static_configs:
-    - targets:
-    {% for host in groups['alertmanager'] %}
-    {% if inventory_hostname != host %}
-      - '{{ host }}:9093'
-    {% endif %}
-    {% endfor %}
+#alerting:
+#  alertmanagers:
+#  - static_configs:
+#    - targets:
+#    {% for host in groups['alertmanager'] %}
+#    {% if inventory_hostname != host %}
+#      - '{{ host }}:9093'
+#    {% endif %}
+#    {% endfor %}
