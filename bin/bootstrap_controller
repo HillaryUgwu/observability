@@ -3,12 +3,10 @@
 sudo yum update -y
 sudo yum install ansible -y
 sudo hostnamectl set-hostname controller
-chmod 600 /home/ec2-user/id_rsa
-chown -R ec2-user:ec2-user /home/ec2-user/id_rsa
 
-echo "StrictHostKeyChecking=accept-new" >> /home/ec2-user/.ssh/config
-chown -R ec2-user:ec2-user /home/ec2-user/.ssh
-chmod 600 /home/ec2-user/.ssh/config
+# echo "StrictHostKeyChecking=accept-new" >> /home/ec2-user/.ssh/config
+# chown -R ec2-user:ec2-user /home/ec2-user/.ssh
+# chmod 600 /home/ec2-user/.ssh/config
 
 # Get Ansible playbook
 git clone --filter=blob:none --no-checkout https://github.com/HillaryUgwu/observability.git
