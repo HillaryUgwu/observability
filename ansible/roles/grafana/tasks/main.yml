@@ -1,14 +1,20 @@
-- name: Import Grafana GPG key
+- name: Add Grafana's GPG key
   rpm_key:
     state: present
-    key: https://apt.grafana.com/gpg.key
-    # key: https://packages.grafana.com/gpg.key
+    key: https://packages.grafana.com/gpg.key
 
-- name: Install grafana
+- name: Add Grafana's YUM repository
+  yum_repository:
+    name: grafana
+    description: Grafana stable repository
+    baseurl: https://packages.grafana.com/oss/rpm
+    gpgcheck: yes
+    enabled: yes
+
+- name: Install Grafana
   yum:
-    name: https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-{{ version }}-1.x86_64.rpm
+    name: grafana
     state: latest
-    disable_gpg_check: yes
 
 - name: "Grafana configuration file copy"
   template:
@@ -16,7 +22,7 @@
     dest: /etc/grafana/grafana.ini
   notify: event_restart_grafana
 
-- name: "Grafana server started"
+- name: "Start Grafana server"
   service:
     name: grafana-server
     enabled: true
