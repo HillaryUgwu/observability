@@ -11,4 +11,4 @@ bash bin/install_terraform_cli
 # bash ./bin/generate_tfrc_credentials
 # cp $CODESPACE_VSCODE_FOLDER/terraform.tfvars.example $CODESPACE_VSCODE_FOLDER/terraform.tfvars
 # bash ./bin/build_provider
-bash bin/create_inventory_skeleton_file
+# bash bin/create_inventory_skeleton_file

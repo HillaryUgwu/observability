@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-
-terraform state rm aws_s3_bucket.terraform_state_bucket
-terraform destroy --auto-approve
-terraform apply --auto-approve
