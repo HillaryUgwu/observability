@@ -5,7 +5,7 @@ echo 'Running the PostCreateCommand...'
 mkdir -p ~/.vscode
 cp .devcontainer/keybindings.json ~/.vscode/keybindings.json
 
-cd $CODESPACE_VSCODE_FOLDER
+# echo "export WORKSPACE_NAME_ID='$CODESPACE_NAME'" >> ~/.envar
 bash bin/set_tf_alias
 bash bin/install_terraform_cli
 # bash ./bin/generate_tfrc_credentials
